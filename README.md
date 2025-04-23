@@ -13,8 +13,6 @@ Decentralized Architecture: Interfaces with blockchain (StarkNet) and DAO-driven
 
 Smart Contract Integrations: For policy issuance, claim management, and settlements
 
-AI-Driven Fraud Detection: Prevents abuse through automated behavioral analysis
-
 Automated Claim Verification: Integrates with oracles and real-time data sources
 
 Decentralized Risk Pools: Enables multi-party risk-sharing without intermediaries
@@ -31,7 +29,8 @@ npm or yarn
 NestJS CLI (optional but recommended)
 
 🚀 Setup Instructions
-1. Clone the Repository
+1.fork the Repository
+2. Clone the Repository
 git clone https://github.com/Stark-Insured/Stark-Insured-Backend.git
 cd Stark-Insured-Backend
 
@@ -44,7 +43,7 @@ Adjust your TypeScript settings in tsconfig.json as needed.
 
 Create a .gitignore file to exclude node_modules, dist, and other sensitive or unnecessary directories.
 
-3. Install Dependencies
+4. Install Dependencies
 Core Dependencies
 npm install @nestjs/config @nestjs/typeorm typeorm pg
 npm install @nestjs/jwt @nestjs/passport passport
