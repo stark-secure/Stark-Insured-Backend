@@ -4,18 +4,22 @@ Welcome to the Stark Insured Backend – the decentralized backend service power
 We appreciate your interest in contributing to our open-source mission. Whether you're building a feature, fixing a bug, or writing documentation, you're helping build the future of decentralized insurance!
 
 ⚙️ Setup Instructions
-1. Clone the Repository
+1. Fork the project
+   
+2. Clone the Repository
 git clone https://github.com/Stark-Insured/Stark-Insured-Backend.git
 
-2. cd Stark-Insured-Backend
+3. cd Stark-Insured-Backend
+   
+4. Create your feature branch (`git checkout -b feature/amazing-feature`)
   
-3. Install Dependencies
+5. Install Dependencies
 npm install
 
-4. Configure Environment Variables
+6. Configure Environment Variables
 Create a .env file in the root directory based on .env.example:
 
-5. Start the Development Server
+7. Start the Development Server
 npm run start:dev
 The application runs at:
 📍 http://localhost:3000
