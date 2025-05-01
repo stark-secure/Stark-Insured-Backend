@@ -2,6 +2,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+}
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -20,6 +25,13 @@ export class User {
   @Exclude() // Don't return password in responses
   password: string;
 
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
+
+  @Column({ nullable: true, type: 'text' })
+  @Exclude()
+  refreshToken: string | null;
+
   @Column({ default: true })
   isActive: boolean;
 
@@ -28,5 +40,4 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
 }
