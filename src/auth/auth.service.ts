@@ -2,18 +2,19 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { User, UserRole } from '../user/entities/user.entity';
-import * as bcrypt from 'bcrypt';
+import { HashingService } from './hashing.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private readonly hashingService: HashingService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && await this.hashingService.comparePassword(password, user.password)) {
       const { password, ...result } = user;
       return result;
     }
