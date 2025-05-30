@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -6,6 +7,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { RiskPoolModule } from './risk-pool/risk-pool.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -23,7 +25,8 @@ import { RiskPoolModule } from './risk-pool/risk-pool.module';
         password: configService.get('DB_PASSWORD', 'postgres'),
         database: configService.get('DB_NAME', 'stark_insured'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV', 'development') !== 'production',
+        synchronize:
+          configService.get('NODE_ENV', 'development') !== 'production',
         autoLoadEntities: true,
       }),
       inject: [ConfigService],
@@ -31,6 +34,7 @@ import { RiskPoolModule } from './risk-pool/risk-pool.module';
     AuthModule,
     UserModule,
     RiskPoolModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
