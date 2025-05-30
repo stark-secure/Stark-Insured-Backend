@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -5,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -22,13 +24,15 @@ import { UserModule } from './user/user.module';
         password: configService.get('DB_PASSWORD', 'postgres'),
         database: configService.get('DB_NAME', 'stark_insured'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV', 'development') !== 'production',
+        synchronize:
+          configService.get('NODE_ENV', 'development') !== 'production',
         autoLoadEntities: true,
       }),
       inject: [ConfigService],
     }),
     AuthModule,
     UserModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
