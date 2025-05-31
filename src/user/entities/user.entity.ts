@@ -1,6 +1,14 @@
 // src/user/entities/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { Policy } from 'src/policys/entities/policy.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -34,6 +42,9 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToMany(() => Policy, (policy) => policy.user)
+  policies: Policy[];
 
   @CreateDateColumn()
   createdAt: Date;

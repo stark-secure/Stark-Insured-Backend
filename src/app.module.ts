@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { RiskPoolModule } from './risk-pool/risk-pool.module';
 import { PaymentModule } from './payment/payment.module';
+import { PolicysModule } from './policys/policys.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PaymentModule } from './payment/payment.module';
     UserModule,
     RiskPoolModule,
     PaymentModule,
+    PolicysModule,
   ],
   controllers: [AppController],
   providers: [AppService],
