@@ -1,6 +1,7 @@
 // src/user/entities/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { Claim } from 'src/claim/entities/claim.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -34,6 +35,9 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToMany(() => Claim, claim => claim.user)
+ claims: Claim[];
 
   @CreateDateColumn()
   createdAt: Date;
