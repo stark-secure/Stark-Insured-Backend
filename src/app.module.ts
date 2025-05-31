@@ -9,6 +9,8 @@ import { UserModule } from './user/user.module';
 import { RiskPoolModule } from './risk-pool/risk-pool.module';
 import { PaymentModule } from './payment/payment.module';
 import { PolicysModule } from './policys/policys.module';
+import { ClaimModule } from './claim/claim.module';
+
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { PolicysModule } from './policys/policys.module';
     RiskPoolModule,
     PaymentModule,
     PolicysModule,
+    ClaimModule,
   ],
   controllers: [AppController],
   providers: [AppService],

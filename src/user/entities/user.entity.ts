@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Policy } from 'src/policys/entities/policy.entity';
+import { Claim } from 'src/claim/entities/claim.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -45,6 +46,10 @@ export class User {
 
   @OneToMany(() => Policy, (policy) => policy.user)
   policies: Policy[];
+
+  @OneToMany(() => Claim, claim => claim.user)
+ claims: Claim[];
+
 
   @CreateDateColumn()
   createdAt: Date;
