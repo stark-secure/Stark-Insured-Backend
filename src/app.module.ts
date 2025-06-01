@@ -10,7 +10,7 @@ import { RiskPoolModule } from './risk-pool/risk-pool.module';
 import { PaymentModule } from './payment/payment.module';
 import { PolicysModule } from './policys/policys.module';
 import { ClaimModule } from './claim/claim.module';
-
+import { GovernanceModule } from './governance/governance.module';
 
 @Module({
   imports: [
@@ -40,6 +40,7 @@ import { ClaimModule } from './claim/claim.module';
     PaymentModule,
     PolicysModule,
     ClaimModule,
+    GovernanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
