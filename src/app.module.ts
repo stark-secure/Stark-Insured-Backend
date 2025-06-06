@@ -12,6 +12,7 @@ import { PolicysModule } from "./policys/policys.module"
 import { ClaimModule } from "./claim/claim.module"
 import { GovernanceModule } from "./governance/governance.module"
 import { MailModule } from "./mail/mail.module"
+import { LpTokenModule } from './lp-token/lp-token.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { MailModule } from "./mail/mail.module"
     ClaimModule,
     GovernanceModule,
     MailModule,
+    LpTokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
