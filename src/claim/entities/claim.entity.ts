@@ -1,10 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../../user/entities/user.entity'; // Adjust path based on your project structure
 
 export enum ClaimStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED'
+  REJECTED = 'REJECTED',
 }
 
 @Entity('claims')
@@ -21,9 +29,12 @@ export class Claim {
   @Column({
     type: 'enum',
     enum: ClaimStatus,
-    default: ClaimStatus.PENDING
+    default: ClaimStatus.PENDING,
   })
   status: ClaimStatus;
+
+  @Column({ type: 'jsonb', nullable: true })
+  oracleData?: any;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -34,7 +45,7 @@ export class Claim {
   @Column()
   userId: number;
 
-  @ManyToOne(() => User, user => user.claims, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.claims, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 }

@@ -13,6 +13,7 @@ import { ClaimModule } from "./claim/claim.module"
 import { GovernanceModule } from "./governance/governance.module"
 import { MailModule } from "./mail/mail.module"
 import { LpTokenModule } from './lp-token/lp-token.module';
+import { OracleModule } from './oracle/oracle.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { LpTokenModule } from './lp-token/lp-token.module';
     GovernanceModule,
     MailModule,
     LpTokenModule,
+    OracleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
