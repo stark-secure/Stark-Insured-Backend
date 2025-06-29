@@ -38,7 +38,7 @@ export class ClaimController {
   @ApiOperation({ summary: 'Create a new claim' })
   @ApiResponse({
     status: 201,
-    description: 'Claim created successfully',
+    description: 'Claim created successfully. Fraud detection will run automatically.',
     type: ClaimResponseDto,
   })
   @ApiResponse({
@@ -74,10 +74,23 @@ export class ClaimController {
   @Get('stats')
   @UseGuards(RolesGuard)
   @Roles('admin')
-  @ApiOperation({ summary: 'Get claim statistics (Admin only)' })
+  @ApiOperation({ summary: 'Get claim statistics including fraud metrics (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Claim statistics retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        total: { type: 'number', description: 'Total number of claims' },
+        pending: { type: 'number', description: 'Number of pending claims' },
+        approved: { type: 'number', description: 'Number of approved claims' },
+        rejected: { type: 'number', description: 'Number of rejected claims' },
+        flagged: { type: 'number', description: 'Number of fraud-flagged claims' },
+        fraudulent: { type: 'number', description: 'Number of fraudulent claims' },
+        fraudCheckCompleted: { type: 'number', description: 'Number of claims with completed fraud checks' },
+        fraudCheckPending: { type: 'number', description: 'Number of claims with pending fraud checks' },
+      },
+    },
   })
   @ApiResponse({
     status: 401,
@@ -89,6 +102,61 @@ export class ClaimController {
   })
   async getStats(): Promise<any> {
     return this.claimService.getClaimStats();
+  }
+
+  @Get('fraud-detection/status')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Get fraud detection service status (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fraud detection service status',
+    schema: {
+      type: 'object',
+      properties: {
+        healthy: { type: 'boolean', description: 'Whether the fraud detection service is healthy' },
+        message: { type: 'string', description: 'Status message' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async getFraudDetectionStatus(): Promise<{ healthy: boolean; message?: string }> {
+    return this.claimService.getFraudDetectionStatus();
+  }
+
+  @Post(':id/fraud-check')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Manually trigger fraud detection for a claim (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Claim ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fraud detection completed successfully',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Claim not found',
+  })
+  async triggerFraudCheck(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string }> {
+    await this.claimService.runFraudDetection(id);
+    return { message: `Fraud detection completed for claim ${id}` };
   }
 
   @Get()
