@@ -14,6 +14,7 @@ import { GovernanceModule } from "./governance/governance.module"
 import { MailModule } from "./mail/mail.module"
 import { LpTokenModule } from './lp-token/lp-token.module';
 import { OracleModule } from './oracle/oracle.module';
+import { KycModule } from './kyc/kyc.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { OracleModule } from './oracle/oracle.module';
     MailModule,
     LpTokenModule,
     OracleModule,
+    KycModule,
   ],
   controllers: [AppController],
   providers: [AppService],

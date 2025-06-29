@@ -10,6 +10,7 @@ import {
 import { Exclude } from 'class-transformer';
 import { Policy } from 'src/policys/entities/policy.entity';
 import { Claim } from 'src/claim/entities/claim.entity';
+import { KycVerification } from 'src/kyc/entities/kyc-verification.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -47,13 +48,25 @@ export class User {
   @OneToMany(() => Policy, (policy) => policy.user)
   policies: Policy[];
 
-  @OneToMany(() => Claim, claim => claim.user)
- claims: Claim[];
+  @OneToMany(() => Claim, (claim) => claim.user)
+  claims: Claim[];
 
+  @OneToMany(() => KycVerification, (kyc) => kyc.user)
+  kycVerifications: KycVerification[];
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // Helper method to get the latest KYC verification
+  get latestKycVerification(): KycVerification | undefined {
+    if (!this.kycVerifications || this.kycVerifications.length === 0) {
+      return undefined;
+    }
+    return this.kycVerifications.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    )[0];
+  }
 }
