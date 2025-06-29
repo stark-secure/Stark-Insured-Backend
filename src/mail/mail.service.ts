@@ -23,6 +23,7 @@ export interface ClaimUpdateEmailData {
   firstName: string
   claimId: number
   status: string
+  remarks?: string
   claimUrl?: string
 }
 
@@ -110,7 +111,7 @@ export class MailService {
     try {
       await this.mailerService.sendMail({
         to,
-        subject: "Stark Insured - Email Configuration Test ✅",
+        subject: "Stark Insured - Email Configuration Test ",
         template: "test-email",
         context: {
           frontendUrl: this.configService.get<string>("FRONTEND_URL"),
@@ -129,13 +130,13 @@ export class MailService {
   private getStatusColor(status: string): string {
     switch (status.toLowerCase()) {
       case "approved":
-        return "#10b981" // green
+        return "#10b981" 
       case "rejected":
-        return "#ef4444" // red
+        return "#ef4444"
       case "pending":
-        return "#f59e0b" // yellow
+        return "#f59e0b" 
       default:
-        return "#6b7280" // gray
+        return "#6b7280" 
     }
   }
 }

@@ -37,6 +37,13 @@
             <p>⏳ Your claim is currently being reviewed. We'll notify you as soon as there's an update.</p>
             {{/if}}
 
+            {{#if remarks}}
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid {{statusColor}};">
+                <p style="margin: 0; font-style: italic;"><strong>Additional Information:</strong></p>
+                <p style="margin: 10px 0 0 0;">{{remarks}}</p>
+            </div>
+            {{/if}}
+
             <div style="text-align: center;">
                 <a href="{{claimUrl}}" class="button">View Claim Details</a>
             </div>

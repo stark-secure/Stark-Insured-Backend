@@ -22,8 +22,8 @@ export class Payment {
   @Column()
   policyId: number;
 
-  @Column()
-  userId: number;
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
 
   @Column('decimal')
   amount: number;

@@ -4,8 +4,8 @@ import { ConfigService } from "@nestjs/config"
 
 export function setupSwagger(app: INestApplication): void {
   const configService = app.get(ConfigService)
-  const isSwaggerEnabled = configService.get<boolean>("SWAGGER_ENABLED", false)
-  const nodeEnv = configService.get<string>("NODE_ENV", "development")
+  const isSwaggerEnabled = configService.get("SWAGGER_ENABLED", false)
+  const nodeEnv = configService.get("NODE_ENV", "development")
 
   // Only enable Swagger in development and staging environments
   if (!isSwaggerEnabled || nodeEnv === "production") {

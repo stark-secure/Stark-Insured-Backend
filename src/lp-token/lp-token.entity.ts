@@ -11,8 +11,8 @@ export class LPToken {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  userId: number;
+  @Column({ type: 'uuid' })
+  userId: string;
 
   @Column()
   poolId: number;

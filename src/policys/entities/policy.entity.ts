@@ -1,4 +1,4 @@
-import { User } from 'src/user/entities/user.entity';
+import { User } from '../../user/entities/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -20,8 +20,8 @@ export class Policy {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'user_id' })
-  userId: number;
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
   coverageAmount: number;

@@ -41,9 +41,9 @@ export class ClaimResponseDto {
 
   @ApiProperty({
     description: 'ID of the user who created the claim',
-    example: 123
+    example: '550e8400-e29b-41d4-a716-446655440000'
   })
-  userId: number;
+  userId: string;
 
   constructor(claim: any) {
     this.id = claim.id;

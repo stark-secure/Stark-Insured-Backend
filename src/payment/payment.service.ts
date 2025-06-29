@@ -19,7 +19,7 @@ export class PaymentService {
     private policyService: PolicyService,
   ) {}
 
-  async createPayment(dto: CreatePaymentDto, userId: number) {
+  async createPayment(dto: CreatePaymentDto, userId: string) {
     const policy = await this.policyService.findById(dto.policyId);
     if (!policy || policy.userId !== userId)
       throw new ForbiddenException('Access denied');
@@ -30,10 +30,10 @@ export class PaymentService {
     return this.paymentRepo.save(payment);
   }
 
-  async getMyPayments(userId: number) {
+  async getMyPayments(userId: string) {
     return this.paymentRepo.find({ where: { userId } });
   }
-  async findPaymentsForUser(userId: number): Promise<Payment[]> {
+  async findPaymentsForUser(userId: string): Promise<Payment[]> {
     return this.paymentRepo.find({ where: { userId } });
   }
 
