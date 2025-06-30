@@ -1,4 +1,3 @@
-// src/user/entities/user.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,9 +7,9 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { Policy } from 'src/policys/entities/policy.entity';
-import { Claim } from 'src/claim/entities/claim.entity';
-import { KycVerification } from 'src/kyc/entities/kyc-verification.entity';
+import { Policy } from '../../policys/entities/policy.entity';
+import { Claim } from '../../claim/entities/claim.entity';
+import { KycVerification } from '../../kyc/entities/kyc-verification.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -32,7 +31,7 @@ export class User {
   lastName: string;
 
   @Column()
-  @Exclude() // Don't return password in responses
+  @Exclude() 
   password: string;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })

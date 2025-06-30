@@ -22,9 +22,9 @@ import {
 import { ClaimService } from './claim.service';
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimDto } from './dto/update-claim.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; // Adjust path based on your project
-import { RolesGuard } from '../auth/guards/roles.guard'; // Adjust path based on your project
-import { Roles } from '../auth/decorators/roles.decorator'; // Adjust path based on your project
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { ClaimResponseDto } from './dto/claim_response_dto';
 
 @ApiTags('claims')
@@ -35,10 +35,14 @@ export class ClaimController {
   constructor(private readonly claimService: ClaimService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new claim' })
+  @ApiOperation({
+    summary: 'Create a new claim',
+    description:
+      'Creates a new insurance claim, sends email notification to the user confirming submission, and runs fraud detection automatically.',
+  })
   @ApiResponse({
     status: 201,
-    description: 'Claim created successfully. Fraud detection will run automatically.',
+    description: 'Claim created successfully. Email notification sent to user. Fraud detection will run automatically.',
     type: ClaimResponseDto,
   })
   @ApiResponse({
@@ -67,7 +71,7 @@ export class ClaimController {
     status: 401,
     description: 'Unauthorized',
   })
-  async findMyCllaims(@Request() req: any): Promise<ClaimResponseDto[]> {
+  async findMyClaims(@Request() req: any): Promise<ClaimResponseDto[]> {
     return this.claimService.findAllByUser(req.user.id);
   }
 
@@ -211,11 +215,16 @@ export class ClaimController {
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles('admin')
-  @ApiOperation({ summary: 'Update a claim (Admin only)' })
+  @ApiOperation({
+    summary: 'Update a claim (Admin only)',
+    description:
+      'Updates claim status and sends email notification to user about status change. Supported status transitions: PENDING → APPROVED, PENDING → REJECTED.',
+  })
   @ApiParam({ name: 'id', description: 'Claim ID' })
   @ApiResponse({
     status: 200,
-    description: 'Claim updated successfully',
+    description:
+      'Claim updated successfully. Email notification sent to user about status change.',
     type: ClaimResponseDto,
   })
   @ApiResponse({

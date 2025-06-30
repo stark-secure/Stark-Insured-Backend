@@ -8,7 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import { DocumentType, KycStatus } from '../dto/kyc-verification.dto';
-import { User } from 'src/user/entities/user.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity('kyc_verifications')
 @Index(['userId', 'status'])

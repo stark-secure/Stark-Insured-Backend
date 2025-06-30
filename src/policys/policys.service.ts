@@ -19,7 +19,7 @@ export class PolicyService {
 
   async create(
     createPolicyDto: CreatePolicyDto,
-    userId: number,
+    userId: string,
   ): Promise<Policy> {
     // Validate date range
     if (createPolicyDto.startDate >= createPolicyDto.endDate) {
@@ -40,14 +40,14 @@ export class PolicyService {
     return this.policyRepository.save(policy);
   }
 
-  async getPoliciesForUser(userId: number): Promise<Policy[]> {
+  async getPoliciesForUser(userId: string): Promise<Policy[]> {
     return this.policyRepository.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
   }
 
-  async findOne(id: number, userId?: number): Promise<Policy> {
+  async findOne(id: number, userId?: string): Promise<Policy> {
     const policy = await this.policyRepository.findOne({
       where: { id },
       relations: ['user'],
@@ -68,7 +68,7 @@ export class PolicyService {
   async update(
     id: number,
     updatePolicyDto: UpdatePolicyDto,
-    userId: number,
+    userId: string,
     isAdmin = false,
   ): Promise<Policy> {
     const policy = await this.findOne(id);
@@ -98,7 +98,7 @@ export class PolicyService {
     return this.policyRepository.save(policy);
   }
 
-  async cancel(id: number, userId: number, isAdmin = false): Promise<Policy> {
+  async cancel(id: number, userId: string, isAdmin = false): Promise<Policy> {
     const policy = await this.findOne(id);
 
     // Check ownership unless admin
@@ -140,14 +140,14 @@ export class PolicyService {
   }
 
   // Additional utility methods
-  async getActivePoliciesForUser(userId: number): Promise<Policy[]> {
+  async getActivePoliciesForUser(userId: string): Promise<Policy[]> {
     return this.policyRepository.find({
       where: { userId, status: PolicyStatus.ACTIVE },
       order: { createdAt: 'DESC' },
     });
   }
 
-  async getTotalCoverageForUser(userId: number): Promise<number> {
+  async getTotalCoverageForUser(userId: string): Promise<number> {
     const result = await this.policyRepository
       .createQueryBuilder('policy')
       .select('SUM(policy.coverageAmount)', 'total')

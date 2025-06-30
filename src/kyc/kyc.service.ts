@@ -9,11 +9,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
-import { User } from 'src/user/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import {
   KycVerificationRequestDto,
   KycVerificationResponseDto,
   KycStatus,
+  DocumentType,
 } from './dto/kyc-verification.dto';
 import { KycVerification } from './entities/kyc-verification.entity';
 

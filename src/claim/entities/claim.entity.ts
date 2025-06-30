@@ -7,14 +7,8 @@ import {
   UpdateDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../user/entities/user.entity'; // Adjust path based on your project structure
-
-export enum ClaimStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  FLAGGED = 'FLAGGED', 
-}
+import { User } from '../../user/entities/user.entity';
+import { ClaimStatus } from '../enums/claim-status.enum';
 
 @Entity('claims')
 export class Claim {
@@ -61,8 +55,8 @@ export class Claim {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column()
-  userId: number;
+  @Column('uuid')
+  userId: string;
 
   @ManyToOne(() => User, (user) => user.claims, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })

@@ -4,8 +4,8 @@ import { ConfigService } from "@nestjs/config"
 
 export function setupSwagger(app: INestApplication): void {
   const configService = app.get(ConfigService)
-  const isSwaggerEnabled = configService.get<boolean>("SWAGGER_ENABLED", false)
-  const nodeEnv = configService.get<string>("NODE_ENV", "development")
+  const isSwaggerEnabled = configService.get("SWAGGER_ENABLED", false)
+  const nodeEnv = configService.get("NODE_ENV", "development")
 
   // Only enable Swagger in development and staging environments
   if (!isSwaggerEnabled || nodeEnv === "production") {
@@ -22,7 +22,7 @@ export function setupSwagger(app: INestApplication): void {
     .setContact(
       "Stark Insured Team",
       "https://github.com/Stark-Insured/Stark-Insured-Backend",
-      "support@starkinsured.com",
+      "support@stmportant for matching up with @ApiBearerAuth() in your controller!arkinsured.com",
     )
     .setLicense("MIT", "https://opensource.org/licenses/MIT")
     .addBearerAuth(
@@ -34,7 +34,7 @@ export function setupSwagger(app: INestApplication): void {
         description: "Enter JWT token",
         in: "header",
       },
-      "JWT-auth", // This name here is important for matching up with @ApiBearerAuth() in your controller!
+      "JWT-auth",
     )
     .addTag("auth", "Authentication and authorization endpoints")
     .addTag("users", "User management endpoints")

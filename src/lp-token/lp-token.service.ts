@@ -13,7 +13,7 @@ export class LpTokenService {
     private readonly lpTokenRepo: Repository<LPToken>
   ) {}
 
-  async mint(userId: number, dto: MintLpTokenDto) {
+  async mint(userId: string, dto: MintLpTokenDto) {
     const token = this.lpTokenRepo.create({
       userId,
       poolId: dto.poolId,
@@ -24,7 +24,7 @@ export class LpTokenService {
     return this.lpTokenRepo.save(token);
   }
 
-  async burn(userId: number, dto: BurnLpTokenDto) {
+  async burn(userId: string, dto: BurnLpTokenDto) {
     const token = await this.lpTokenRepo.findOne({ where: { tokenId: dto.tokenId } });
 
     if (!token) throw new NotFoundException('Token not found');
@@ -42,7 +42,7 @@ export class LpTokenService {
     }
   }
 
-  async findByUser(userId: number) {
+  async findByUser(userId: string) {
     return this.lpTokenRepo.find({ where: { userId } });
   }
 }
