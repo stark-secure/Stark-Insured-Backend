@@ -13,6 +13,7 @@ export enum ClaimStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  FLAGGED = 'FLAGGED', 
 }
 
 @Entity('claims')
@@ -35,6 +36,24 @@ export class Claim {
 
   @Column({ type: 'jsonb', nullable: true })
   oracleData?: any;
+
+  @Column({ type: 'boolean', default: false })
+  fraudCheckCompleted: boolean;
+
+  @Column({ type: 'boolean', nullable: true })
+  isFraudulent?: boolean;
+
+  @Column({ type: 'decimal', precision: 3, scale: 2, nullable: true })
+  fraudConfidenceScore?: number;
+
+  @Column({ type: 'jsonb', nullable: true })
+  fraudDetectionData?: {
+    reason?: string;
+    riskFactors?: string[];
+    modelVersion?: string;
+    detectedAt?: Date;
+    metadata?: any;
+  };
 
   @CreateDateColumn()
   createdAt: Date;
