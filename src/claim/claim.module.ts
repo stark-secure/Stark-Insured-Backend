@@ -5,11 +5,18 @@ import { ClaimService } from './claim.service';
 import { ClaimNotificationService } from './notification.service';
 import { Claim } from './entities/claim.entity';
 import { OracleModule } from '../oracle/oracle.module';
+import { FraudDetectionModule } from '../fraud-detection/fraud-detection.module';
 import { MailModule } from '../mail/mail.module';
 import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Claim]), OracleModule, MailModule, UserModule],
+  imports: [
+    TypeOrmModule.forFeature([Claim]), 
+    OracleModule, 
+    MailModule, 
+    UserModule,
+    FraudDetectionModule,
+  ],
   controllers: [ClaimController],
   providers: [ClaimService, ClaimNotificationService],
   exports: [ClaimService, ClaimNotificationService],

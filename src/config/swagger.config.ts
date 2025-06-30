@@ -34,7 +34,7 @@ export function setupSwagger(app: INestApplication): void {
         description: "Enter JWT token",
         in: "header",
       },
-      "JWT-auth", // This name here is i
+      "JWT-auth",
     )
     .addTag("auth", "Authentication and authorization endpoints")
     .addTag("users", "User management endpoints")

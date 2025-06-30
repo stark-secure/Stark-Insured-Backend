@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
+  
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,6 +15,7 @@ import { ClaimResponseDto } from './dto/claim_response_dto';
 import { OracleService } from '../oracle/oracle.service';
 import { ClaimNotificationService } from './notification.service';
 import { UserService } from '../user/user.service';
+import { FraudDetectionService } from '../fraud-detection/interfaces/fraud-detection.interface';
 
 @Injectable()
 export class ClaimService {
@@ -22,10 +24,10 @@ export class ClaimService {
   constructor(
     @InjectRepository(Claim)
     private readonly claimRepository: Repository<Claim>,
-
     private readonly oracleService: OracleService,
     private readonly notificationService: ClaimNotificationService,
     private readonly userService: UserService,
+    private readonly fraudDetectionService: FraudDetectionService,
   ) {}
 
   async create(
@@ -55,6 +57,9 @@ export class ClaimService {
         },
       );
     }
+
+    // Run fraud detection asynchronously after claim creation
+    this.runFraudDetectionAsync(savedClaim.id);
 
     return new ClaimResponseDto(savedClaim);
   }
@@ -169,18 +174,28 @@ export class ClaimService {
   }
 
   async getClaimStats(): Promise<any> {
-    const [total, pending, approved, rejected] = await Promise.all([
+    const [total, pending, approved, rejected, flagged, fraudulent] = await Promise.all([
       this.claimRepository.count(),
       this.claimRepository.count({ where: { status: ClaimStatus.PENDING } }),
       this.claimRepository.count({ where: { status: ClaimStatus.APPROVED } }),
       this.claimRepository.count({ where: { status: ClaimStatus.REJECTED } }),
+      this.claimRepository.count({ where: { status: ClaimStatus.FLAGGED } }),
+      this.claimRepository.count({ where: { isFraudulent: true } }),
     ]);
+
+    const fraudCheckCompleted = await this.claimRepository.count({ 
+      where: { fraudCheckCompleted: true } 
+    });
 
     return {
       total,
       pending,
       approved,
       rejected,
+      flagged,
+      fraudulent,
+      fraudCheckCompleted,
+      fraudCheckPending: total - fraudCheckCompleted,
     };
   }
 
@@ -195,6 +210,25 @@ export class ClaimService {
     }
 
     try {
+      // Run fraud detection first
+      if (!claim.fraudCheckCompleted) {
+        await this.runFraudDetection(claimId);
+        // Reload claim to get updated fraud data
+        const updatedClaim = await this.claimRepository.findOne({ 
+          where: { id: claimId } 
+        });
+        if (updatedClaim) {
+          Object.assign(claim, updatedClaim);
+        }
+      }
+
+      // If claim is flagged as fraudulent, don't proceed with oracle verification
+      if (claim.isFraudulent) {
+        this.logger.warn(`Claim ${claimId} flagged as fraudulent, skipping oracle verification`);
+        return;
+      }
+
+      // Proceed with oracle verification
       const verdict = await this.oracleService.verifyClaim(
         claim.id,
         claim.description,
@@ -253,6 +287,95 @@ export class ClaimService {
         },
       );
       throw error;
+    }
+  }
+
+  /**
+   * Run fraud detection on a specific claim
+   */
+  public async runFraudDetection(claimId: number): Promise<void> {
+    const claim = await this.claimRepository.findOne({ where: { id: claimId } });
+
+    if (!claim) {
+      throw new NotFoundException(`Claim with ID ${claimId} not found`);
+    }
+
+    if (claim.fraudCheckCompleted) {
+      this.logger.warn(`Fraud detection already completed for claim ${claimId}`);
+      return;
+    }
+
+    try {
+      this.logger.log(`Starting fraud detection for claim ${claimId}`);
+      
+      const fraudResult = await this.fraudDetectionService.detectFraud(claim);
+      
+      // Update claim with fraud detection results
+      claim.fraudCheckCompleted = true;
+      claim.isFraudulent = fraudResult.isFraudulent;
+      claim.fraudConfidenceScore = fraudResult.confidenceScore;
+      claim.fraudDetectionData = {
+        reason: fraudResult.reason,
+        riskFactors: fraudResult.metadata?.riskFactors,
+        modelVersion: fraudResult.metadata?.modelVersion,
+        detectedAt: fraudResult.metadata?.timestamp || new Date(),
+        metadata: fraudResult.metadata,
+      };
+
+      // Flag claim if fraudulent
+      if (fraudResult.isFraudulent) {
+        claim.status = ClaimStatus.FLAGGED;
+        this.logger.warn(
+          `Claim ${claimId} flagged as fraudulent (confidence: ${fraudResult.confidenceScore.toFixed(2)})`
+        );
+      }
+
+      await this.claimRepository.save(claim);
+      
+      this.logger.log(
+        `Fraud detection completed for claim ${claimId}: ${
+          fraudResult.isFraudulent ? 'FRAUDULENT' : 'LEGITIMATE'
+        }`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Fraud detection failed for claim ${claimId}: ${error.message}`,
+        error.stack
+      );
+      
+      // Mark fraud check as completed even if it failed to avoid infinite retries
+      claim.fraudCheckCompleted = true;
+      await this.claimRepository.save(claim);
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Run fraud detection asynchronously (fire and forget)
+   */
+  private runFraudDetectionAsync(claimId: number): void {
+    // Use setTimeout to run fraud detection asynchronously
+    setTimeout(async () => {
+      try {
+        await this.runFraudDetection(claimId);
+      } catch (error) {
+        // Error is already logged in runFraudDetection
+      }
+    }, 0);
+  }
+
+  /**
+   * Get fraud detection service status
+   */
+  async getFraudDetectionStatus(): Promise<{ healthy: boolean; message?: string }> {
+    try {
+      if (this.fraudDetectionService.getServiceStatus) {
+        return await this.fraudDetectionService.getServiceStatus();
+      }
+      return { healthy: true, message: 'Service status check not implemented' };
+    } catch (error) {
+      return { healthy: false, message: error.message };
     }
   }
 }

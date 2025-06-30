@@ -15,6 +15,7 @@ import { MailModule } from "./mail/mail.module"
 import { LpTokenModule } from './lp-token/lp-token.module';
 import { OracleModule } from './oracle/oracle.module';
 import { KycModule } from './kyc/kyc.module';
+import { FraudDetectionModule } from './fraud-detection/fraud-detection.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { KycModule } from './kyc/kyc.module';
     LpTokenModule,
     OracleModule,
     KycModule,
+    FraudDetectionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
