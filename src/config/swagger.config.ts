@@ -22,7 +22,7 @@ export function setupSwagger(app: INestApplication): void {
     .setContact(
       "Stark Insured Team",
       "https://github.com/Stark-Insured/Stark-Insured-Backend",
-      "support@starkinsured.com",
+      "support@stmportant for matching up with @ApiBearerAuth() in your controller!arkinsured.com",
     )
     .setLicense("MIT", "https://opensource.org/licenses/MIT")
     .addBearerAuth(
@@ -34,7 +34,7 @@ export function setupSwagger(app: INestApplication): void {
         description: "Enter JWT token",
         in: "header",
       },
-      "JWT-auth", // This name here is important for matching up with @ApiBearerAuth() in your controller!
+      "JWT-auth", // This name here is i
     )
     .addTag("auth", "Authentication and authorization endpoints")
     .addTag("users", "User management endpoints")

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailService } from '../mail/mail.service';
-import { Claim, ClaimStatus } from './entities/claim.entity';
+import { Claim } from './entities/claim.entity';
+import { ClaimStatus } from '../claim/enums/claim-status.enum';
 import { User } from '../user/entities/user.entity';
 
 export interface ClaimStatusChangeEvent {

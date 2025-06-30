@@ -8,11 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity'; 
-export enum ClaimStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-}
+import { ClaimStatus } from '../enums/claim-status.enum';
 
 @Entity('claims')
 export class Claim {

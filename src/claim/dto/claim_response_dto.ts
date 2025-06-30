@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ClaimStatus } from '../entities/claim.entity';
+import { ClaimStatus } from '../enums/claim-status.enum';
 
 export class ClaimResponseDto {
   @ApiProperty({
