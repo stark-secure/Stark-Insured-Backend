@@ -1,58 +1,33 @@
-/* eslint-disable prettier/prettier */
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  ManyToOne,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import { User } from 'src/user/entities/user.entity';
 
-export enum ProposalStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  PASSED = 'passed',
-  REJECTED = 'rejected',
-}
-
-@Entity()
+@Entity('proposals')
 export class Proposal {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column()
+  @Column({ length: 200 })
   title: string;
 
-  @Column('text')
+  @Column({ type: 'text' })
   description: string;
 
-  @Column({
-    type: 'enum',
-    enum: ProposalStatus,
-    default: ProposalStatus.PENDING,
-  })
-  status: ProposalStatus;
-
-  @Column({ type: 'int', default: 0 })
-  voteFor: number;
-
-  @Column({ type: 'int', default: 0 })
-  voteAgainst: number;
-
-  @Column()
-  createdBy: string;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'createdBy' })
+  @ManyToOne(() => User, { eager: true })
   creator: User;
 
-  @Column()
-  startsAt: Date;
+  @Column({ type: 'timestamp' })
+  expiry: Date;
 
-  @Column()
-  endsAt: Date;
+  @OneToMany(() => Vote, (vote) => vote.proposal)
+  votes: Vote[];
 
   @CreateDateColumn()
   createdAt: Date;
