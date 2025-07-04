@@ -1,11 +1,21 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import type { Repository } from 'typeorm';
-import type { Proposal } from './entities/proposal.entity';
+import { Proposal } from './entities/proposal.entity';
 import type { Vote } from './entities/vote.entity';
 import type { UpdateProposalDto } from './dto/update-proposal.dto';
 import type { ProposalResponseDto } from './dto/proposal-response.dto';
 import type { VoteReceiptResponseDto } from './dto/vote-receipt-response.dto';
 import type { ProposalResultResponseDto } from './dto/proposal-result-response.dto';
+import { GetProposalsDto } from './dto/get-proposal.dto';
+import { PaginatedProposalsDto } from './dto/paginated-proposal.dto';
+import { CreateProposalDto } from './dto/create-proposal.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class GovernanceService {
@@ -13,6 +23,7 @@ export class GovernanceService {
   private voteRepository: Repository<Vote>;
 
   constructor(
+    @InjectRepository(Proposal)
     proposalRepository: Repository<Proposal>,
     voteRepository: Repository<Vote>,
   ) {
@@ -35,7 +46,7 @@ export class GovernanceService {
     }
 
     // Check if user is the creator
-    if (proposal.creator.id !== userId) {
+    if (proposal.createdBy !== userId) {
       throw new HttpException(
         'Only the proposal creator can update this proposal',
         HttpStatus.FORBIDDEN,
@@ -55,7 +66,7 @@ export class GovernanceService {
       ...proposal,
       title: updateProposalDto.title ?? proposal.title,
       description: updateProposalDto.description ?? proposal.description,
-      expiry: updateProposalDto.expiry ?? proposal.expiry,
+      expiry: updateProposalDto.expiryDate ?? proposal.expiryDate,
       updatedAt: new Date(),
     });
 
@@ -73,7 +84,7 @@ export class GovernanceService {
     }
 
     // Check if user is the creator
-    if (proposal.creator.id !== userId) {
+    if (proposal.createdBy !== userId) {
       throw new HttpException(
         'Only the proposal creator can delete this proposal',
         HttpStatus.FORBIDDEN,
@@ -184,12 +195,12 @@ export class GovernanceService {
   private hasVotingStarted(proposal: Proposal): boolean {
     // Assuming voting starts immediately when proposal is created
     // You can modify this logic based on your business rules
-    const votes = proposal.votes || [];
+    const votes = proposal.voteCount || [];
     return votes.length > 0;
   }
 
   private hasVotingEnded(proposal: Proposal): boolean {
-    return new Date() > proposal.expiry;
+    return new Date() > proposal.expiryDate;
   }
 
   private mapToProposalResponse(proposal: Proposal): ProposalResponseDto {
@@ -197,10 +208,101 @@ export class GovernanceService {
       id: proposal.id,
       title: proposal.title,
       description: proposal.description,
-      creatorId: proposal.creator.id,
-      expiry: proposal.expiry,
+      creatorId: proposal.createdBy,
+      expiry: proposal.expiryDate,
       createdAt: proposal.createdAt,
       updatedAt: proposal.updatedAt,
     };
+  }
+
+  async create(createProposalDto: CreateProposalDto): Promise<Proposal> {
+    // Validate date range
+    if (createProposalDto.startDate >= createProposalDto.expiryDate) {
+      throw new BadRequestException('Start date must be before expiry date');
+    }
+
+    const proposal = this.proposalRepository.create(createProposalDto);
+    return this.proposalRepository.save(proposal);
+  }
+
+  async findAll(query: GetProposalsDto): Promise<PaginatedProposalsDto> {
+    const { page, limit, status, sortBy, sortOrder, search } = query;
+
+    const queryBuilder = this.proposalRepository.createQueryBuilder('proposal');
+
+    // Apply filters
+    if (status) {
+      queryBuilder.andWhere('proposal.status = :status', { status });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(proposal.title ILIKE :search OR proposal.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    // Apply sorting
+    const sortField = this.getSortField(sortBy);
+    queryBuilder.orderBy(`proposal.${sortField}`, sortOrder);
+
+    // Apply pagination
+    const skip = (page - 1) * limit;
+    queryBuilder.skip(skip).take(limit);
+
+    // Execute query
+    const [proposals, totalCount] = await queryBuilder.getManyAndCount();
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data: proposals,
+      totalCount,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+  }
+
+  async findOne(id: string): Promise<Proposal> {
+    const proposal = await this.proposalRepository.findOne({ where: { id } });
+    if (!proposal) {
+      throw new NotFoundException(`Proposal with ID ${id} not found`);
+    }
+    return proposal;
+  }
+
+  async update(
+    id: string,
+    updateProposalDto: UpdateProposalDto,
+  ): Promise<Proposal> {
+    const proposal = await this.findOne(id);
+
+    // Validate date range if both dates are provided
+    const startDate = updateProposalDto.startDate || proposal.startDate;
+    const expiryDate = updateProposalDto.expiryDate || proposal.expiryDate;
+
+    if (startDate >= expiryDate) {
+      throw new BadRequestException('Start date must be before expiry date');
+    }
+
+    Object.assign(proposal, updateProposalDto);
+    return this.proposalRepository.save(proposal);
+  }
+
+  async remove(id: string): Promise<void> {
+    const proposal = await this.findOne(id);
+    await this.proposalRepository.remove(proposal);
+  }
+
+  private getSortField(sortBy: string): string {
+    const sortFields = {
+      createdAt: 'createdAt',
+      expiryDate: 'expiryDate',
+      voteCount: 'voteCount',
+    };
+    return sortFields[sortBy] || 'createdAt';
   }
 }
