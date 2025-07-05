@@ -4,10 +4,11 @@ import {
   HttpStatus,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 import { Proposal } from './entities/proposal.entity';
-import type { Vote } from './entities/vote.entity';
+import { Vote } from './entities/vote.entity';
 import type { UpdateProposalDto } from './dto/update-proposal.dto';
 import type { ProposalResponseDto } from './dto/proposal-response.dto';
 import type { VoteReceiptResponseDto } from './dto/vote-receipt-response.dto';
@@ -16,19 +17,37 @@ import { GetProposalsDto } from './dto/get-proposal.dto';
 import { PaginatedProposalsDto } from './dto/paginated-proposal.dto';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  DuplicateVoteException,
+  ProposalExpiredException,
+  ProposalNotFoundException,
+  UnauthorizedVoterException,
+} from './exception/governance.exception';
+import { CreateVoteDto } from './dto/vote.dto';
+import { User } from 'src/user/entities/user.entity';
+import { VoteType } from './dto/cast-vote.dto';
 
 @Injectable()
 export class GovernanceService {
   private proposalRepository: Repository<Proposal>;
   private voteRepository: Repository<Vote>;
+  private userRepository: Repository<User>;
 
   constructor(
     @InjectRepository(Proposal)
     proposalRepository: Repository<Proposal>,
+
+    @InjectRepository(Vote)
     voteRepository: Repository<Vote>,
+
+    @InjectRepository(User)
+    userRepository: Repository<User>,
+
+    private readonly logger = new Logger(GovernanceService.name),
   ) {
     this.proposalRepository = proposalRepository;
     this.voteRepository = voteRepository;
+    this.userRepository = userRepository; // Add this missing assignment
   }
 
   async updateProposal(
@@ -196,7 +215,14 @@ export class GovernanceService {
     // Assuming voting starts immediately when proposal is created
     // You can modify this logic based on your business rules
     const votes = proposal.voteCount || [];
-    return votes.length > 0;
+
+    // Check if votes is an array before using .length
+    if (Array.isArray(votes)) {
+      return votes.length > 0;
+    }
+
+    // If it's a number, check if it's greater than 0
+    return votes > 0;
   }
 
   private hasVotingEnded(proposal: Proposal): boolean {
@@ -304,5 +330,138 @@ export class GovernanceService {
       voteCount: 'voteCount',
     };
     return sortFields[sortBy] || 'createdAt';
+  }
+
+  async vote(userId: string, createVoteDto: CreateVoteDto): Promise<Vote> {
+    const { proposalId, voteType } = createVoteDto;
+
+    // Check if user is DAO member (mock implementation)
+    await this.validateDAOMember(userId);
+
+    // Check if proposal exists
+    const proposal = await this.proposalRepository.findOne({
+      where: { id: proposalId },
+    });
+
+    if (!proposal) {
+      throw new ProposalNotFoundException(proposalId);
+    }
+
+    // Check if proposal is expired
+    if (proposal.expiryDate) {
+      throw new ProposalExpiredException(proposalId);
+    }
+
+    // Get user entity
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(userId);
+    }
+
+    // Check for duplicate vote - use the correct property names
+    const existingVote = await this.voteRepository.findOne({
+      where: {
+        proposal: { id: proposalId },
+        voter: { id: userId }, // Changed from 'user' to 'voter'
+      },
+      relations: ['proposal', 'voter'],
+    });
+
+    if (existingVote) {
+      throw new DuplicateVoteException(proposalId, userId);
+    }
+
+    // Create and save vote - use the correct property names
+    const vote = this.voteRepository.create({
+      proposal,
+      voter: user, // Changed from 'user' to 'voter'
+      vote: voteType,
+    });
+
+    const savedVote = await this.voteRepository.save(vote);
+
+    // Load the vote with relations for response
+    const voteWithRelations = await this.voteRepository.findOne({
+      where: { id: savedVote.id },
+      relations: ['proposal', 'voter'], // Changed from 'user' to 'voter'
+    });
+
+    this.logger.log(`Vote created: ${savedVote.id} by user ${userId}`);
+
+    return voteWithRelations;
+  }
+
+  async getVoteTally(proposalId: string): Promise<{
+    for: number;
+    against: number;
+    abstain: number;
+    total: number;
+  }> {
+    const proposal = await this.proposalRepository.findOne({
+      where: { id: proposalId },
+    });
+
+    if (!proposal) {
+      throw new ProposalNotFoundException(proposalId);
+    }
+
+    // Use QueryBuilder for more efficient counting
+    const voteCount = await this.voteRepository
+      .createQueryBuilder('vote')
+      .select('vote.vote', 'voteType') // Use 'vote' instead of 'voteType'
+      .addSelect('COUNT(*)', 'count')
+      .where('vote.proposalId = :proposalId', { proposalId })
+      .groupBy('vote.vote')
+      .getRawMany();
+
+    const tally = {
+      for: 0,
+      against: 0,
+      abstain: 0,
+      total: 0,
+    };
+
+    voteCount.forEach((result) => {
+      const count = parseInt(result.count);
+      switch (result.voteType) {
+        case VoteType.FOR:
+          tally.for = count;
+          break;
+        case VoteType.AGAINST:
+          tally.against = count;
+          break;
+        case VoteType.ABSTAIN:
+          tally.abstain = count;
+          break;
+      }
+      tally.total += count;
+    });
+
+    return tally;
+  }
+
+  private async validateDAOMember(userId: string): Promise<void> {
+    // Mock DAO member validation - replace with actual logic
+    const daoMembers = ['user1', 'user2', 'user3']; // This would come from database
+
+    if (!daoMembers.includes(userId)) {
+      throw new UnauthorizedVoterException(userId);
+    }
+  }
+
+  async getProposal(id: string): Promise<Proposal> {
+    const proposal = await this.proposalRepository.findOne({
+      where: { id },
+      relations: ['votes'],
+    });
+
+    if (!proposal) {
+      throw new ProposalNotFoundException(id);
+    }
+
+    return proposal;
   }
 }

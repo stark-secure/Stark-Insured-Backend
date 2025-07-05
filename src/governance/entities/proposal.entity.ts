@@ -1,13 +1,31 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { IsString, IsEnum, IsDate, IsOptional, Length, MinLength, IsInt, Min, ValidateIf } from 'class-validator';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import {
+  IsString,
+  IsEnum,
+  IsDate,
+  IsOptional,
+  Length,
+  MinLength,
+  IsInt,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { Vote } from './vote.entity';
 
 export enum ProposalStatus {
   DRAFT = 'draft',
   ACTIVE = 'active',
   PASSED = 'passed',
   REJECTED = 'rejected',
-  EXPIRED = 'expired'
+  EXPIRED = 'expired',
 }
 
 @Entity('proposals')
@@ -28,6 +46,9 @@ export class Proposal {
   @Column({ type: 'enum', enum: ProposalStatus, default: ProposalStatus.DRAFT })
   @IsEnum(ProposalStatus)
   status: ProposalStatus;
+
+  @OneToMany(() => Vote, (vote) => vote.proposal)
+  votes: Vote[];
 
   @Column({ type: 'timestamp' })
   @IsDate()
