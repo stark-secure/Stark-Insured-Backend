@@ -9,6 +9,8 @@ import {
   Param,
   Query,
   Post,
+  HttpStatus,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +21,7 @@ import {
   ApiQuery,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { GovernanceService } from './governance.service';
 import type { UpdateProposalDto } from './dto/update-proposal.dto';
@@ -30,13 +33,18 @@ import { Proposal } from './entities/proposal.entity';
 import { GetProposalsDto } from './dto/get-proposal.dto';
 import { PaginatedProposalsDto } from './dto/paginated-proposal.dto';
 import { CreateProposalDto } from './dto/create-proposal.dto';
+import { CreateVoteDto, VoteResponseDto } from './dto/vote.dto';
+import { UserService } from 'src/user/user.service';
 
 @ApiTags('Governance')
 @Controller('governance')
 @UseGuards(DaoMemberGuard)
 @ApiBearerAuth()
 export class GovernanceController {
-  constructor(private readonly governanceService: GovernanceService) {}
+  constructor(
+    private readonly governanceService: GovernanceService,
+    private readonly userService: UserService,
+  ) {}
 
   @Patch('proposal/:id')
   @ApiOperation({
@@ -264,5 +272,79 @@ export class GovernanceController {
   @ApiNotFoundResponse({ description: 'Proposal not found' })
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.governanceService.remove(id);
+  }
+
+  @Post('vote')
+  @ApiOperation({ summary: 'Submit a vote on a proposal' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Vote successfully submitted',
+    type: VoteResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid vote data or proposal expired',
+    type: ApiInternalServerErrorResponse,
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'User has already voted on this proposal',
+    type: ApiInternalServerErrorResponse,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'User is not authorized to vote',
+    type: ApiInternalServerErrorResponse,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Proposal not found',
+    type: ApiInternalServerErrorResponse,
+  })
+  async vote(
+    @Body() createVoteDto: CreateVoteDto,
+    @Request() req,
+  ): Promise<VoteResponseDto> {
+    const userId = req.user.id;
+    const vote = await this.governanceService.vote(userId, createVoteDto);
+    return {
+      id: vote.id,
+      proposalId: vote.proposal.id, // Access the ID from the proposal relation
+      userId: vote.voter.id, // Access the ID from the user relation
+      voteType: vote.vote, // Or whatever your vote type field is called
+      createdAt: vote.createdAt,
+    };
+  }
+
+  @Get('proposal/:id/tally')
+  @ApiOperation({ summary: 'Get vote tally for a proposal' })
+  @ApiParam({ name: 'id', description: 'Proposal ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Vote tally retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Proposal not found',
+    type: ApiInternalServerErrorResponse,
+  })
+  async getVoteTally(@Param('id') proposalId: string) {
+    return await this.governanceService.getVoteTally(proposalId);
+  }
+
+  @Get('proposal/:id')
+  @ApiOperation({ summary: 'Get proposal details' })
+  @ApiParam({ name: 'id', description: 'Proposal ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Proposal retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Proposal not found',
+    type: ApiInternalServerErrorResponse,
+  })
+  async getProposal(@Param('id') id: string) {
+    return await this.governanceService.getProposal(id);
   }
 }

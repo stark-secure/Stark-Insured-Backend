@@ -4,6 +4,7 @@ import { IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
 export enum VoteType {
   FOR = 'for',
   AGAINST = 'against',
+  ABSTAIN = 'abstain',
 }
 
 export class CastVoteDto {
