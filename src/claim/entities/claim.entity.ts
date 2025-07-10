@@ -32,6 +32,9 @@ export class Claim {
   oracleData?: any;
 
   @Column({ type: 'boolean', default: false })
+  oracleVerified: boolean;
+
+  @Column({ type: 'boolean', default: false })
   fraudCheckCompleted: boolean;
 
   @Column({ type: 'boolean', nullable: true })

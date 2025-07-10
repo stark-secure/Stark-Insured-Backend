@@ -45,6 +45,36 @@ export class ClaimResponseDto {
   })
   userId: string;
 
+  @ApiProperty({
+    description: 'Whether the claim has been verified by oracle',
+    example: true
+  })
+  oracleVerified: boolean;
+
+  @ApiProperty({
+    description: 'Oracle verification data',
+    required: false,
+    example: {
+      verifiedAt: '2024-03-15T10:35:00Z',
+      eventType: 'wallet_exploit',
+      confidenceScore: 0.95
+    }
+  })
+  oracleData?: any;
+
+  @ApiProperty({
+    description: 'Whether fraud check has been completed',
+    example: true
+  })
+  fraudCheckCompleted: boolean;
+
+  @ApiProperty({
+    description: 'Whether the claim is flagged as fraudulent',
+    required: false,
+    example: false
+  })
+  isFraudulent?: boolean;
+
   constructor(claim: any) {
     this.id = claim.id;
     this.type = claim.type;
@@ -53,5 +83,9 @@ export class ClaimResponseDto {
     this.createdAt = claim.createdAt;
     this.updatedAt = claim.updatedAt;
     this.userId = claim.userId;
+    this.oracleVerified = claim.oracleVerified || false;
+    this.oracleData = claim.oracleData;
+    this.fraudCheckCompleted = claim.fraudCheckCompleted || false;
+    this.isFraudulent = claim.isFraudulent;
   }
 }

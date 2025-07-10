@@ -43,6 +43,7 @@ export function setupSwagger(app: INestApplication): void {
     .addTag("payments", "Payment processing endpoints")
     .addTag("risk-pools", "Risk pool management")
     .addTag("governance", "DAO governance and proposal management")
+    .addTag("Oracle", "Oracle verification and off-chain data integration")
     .addServer("http://localhost:3000", "Development server")
     .addServer("https://api-staging.starkinsured.com", "Staging server")
     .build()
