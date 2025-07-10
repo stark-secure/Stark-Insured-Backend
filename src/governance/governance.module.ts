@@ -6,6 +6,7 @@ import { GovernanceService } from './governance.service';
 import { Proposal } from './entities/proposal.entity';
 import { Vote } from './entities/vote.entity';
 import { DaoMemberGuard } from './guards/dao-member.guard';
+import { StarknetDaoService } from './services/starknet-dao.service';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { DaoMemberGuard } from './guards/dao-member.guard';
     }),
   ],
   controllers: [GovernanceController],
-  providers: [GovernanceService, DaoMemberGuard],
+  providers: [GovernanceService, DaoMemberGuard, StarknetDaoService],
   exports: [GovernanceService],
 })
 export class GovernanceModule {}

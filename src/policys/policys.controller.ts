@@ -35,25 +35,25 @@ export class PolicyController {
     @Body() createPolicyDto: CreatePolicyDto,
     @Request() req: RequestWithUser,
   ) {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
     return this.policyService.create(createPolicyDto, userId);
   }
 
   @Get('me')
   async getMyPolicies(@Request() req: RequestWithUser) {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
     return this.policyService.getPoliciesForUser(userId);
   }
 
   @Get('me/active')
   async getMyActivePolicies(@Request() req: RequestWithUser) {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
     return this.policyService.getActivePoliciesForUser(userId);
   }
 
   @Get('me/coverage-total')
   async getMyCoverageTotal(@Request() req: RequestWithUser) {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
     const total = await this.policyService.getTotalCoverageForUser(userId);
     return { totalCoverage: total };
   }
@@ -63,7 +63,7 @@ export class PolicyController {
     @Param('id', ParseIntPipe) id: number,
     @Request() req: RequestWithUser,
   ) {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
     const isAdmin = req.user.roles?.includes('admin');
 
     return this.policyService.findOne(id, isAdmin ? undefined : userId);
@@ -75,7 +75,7 @@ export class PolicyController {
     @Body() updatePolicyDto: UpdatePolicyDto,
     @Request() req: RequestWithUser,
   ) {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
     const isAdmin = req.user.roles?.includes('admin');
 
     return this.policyService.update(id, updatePolicyDto, userId, isAdmin);
@@ -87,7 +87,7 @@ export class PolicyController {
     @Param('id', ParseIntPipe) id: number,
     @Request() req: RequestWithUser,
   ) {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
     const isAdmin = req.user.roles?.includes('admin');
 
     return this.policyService.cancel(id, userId, isAdmin);

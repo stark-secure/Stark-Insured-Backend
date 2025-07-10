@@ -6,6 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { UserRole, User } from '../../user/entities/user.entity';
+import { StarknetDaoService } from '../services/starknet-dao.service';
 
 interface AuthenticatedRequest extends Request {
   user: User;
@@ -13,31 +14,22 @@ interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class DaoMemberGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
+  constructor(private readonly starknetDaoService: StarknetDaoService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('Authentication required');
     }
-
-    // Stub implementation: For now, check if user is admin or has specific role
-    // In production, this would verify DAO token stake or NFT ownership
-    const isDaoMember = this.verifyDaoMembership(user);
-
+    if (!user.starknetAddress) {
+      throw new ForbiddenException('StarkNet address required for DAO membership check');
+    }
+    const isDaoMember = await this.starknetDaoService.isDaoMember(user.starknetAddress);
     if (!isDaoMember) {
       throw new ForbiddenException('DAO membership required');
     }
-
     return true;
-  }
-
-  private verifyDaoMembership(user: User): boolean {
-    // Stub implementation - in production this would:
-    // 1. Check StarkNet wallet signature
-    // 2. Verify DAO token balance
-    // 3. Check NFT ownership
-    // For now, allow admin users and assume others have DAO tokens
-    return user.role === UserRole.ADMIN || user.isActive;
   }
 }
