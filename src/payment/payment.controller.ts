@@ -27,7 +27,7 @@ export class PaymentController {
     @Body() dto: CreatePaymentDto,
     @Req() req: import('express').Request & { user: { id: number } },
   ) {
-    return this.paymentService.createPayment(dto, req.user.id);
+    return this.paymentService.createPayment(dto, String(req.user.id));
   }
 
   // Authenticated user views their own payments
@@ -36,7 +36,7 @@ export class PaymentController {
   findMyPayments(
     @Req() req: import('express').Request & { user: { id: number } },
   ) {
-    return this.paymentService.findPaymentsForUser(req.user.id);
+    return this.paymentService.findPaymentsForUser(String(req.user.id));
   }
 
   // Admin/system confirms or rejects a payment

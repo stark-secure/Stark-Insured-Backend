@@ -44,6 +44,9 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ nullable: true })
+  starknetAddress?: string;
+
   @OneToMany(() => Policy, (policy) => policy.user)
   policies: Policy[];
 
