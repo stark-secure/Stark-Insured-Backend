@@ -34,4 +34,28 @@ export class RiskPoolController {
   update(@Param('id', ParseIntPipe) id: number, @Body() updateRiskPoolDto: UpdateRiskPoolDto) {
     return this.riskPoolService.update(id, updateRiskPoolDto);
   }
+
+  @Get(':id/metrics')
+  getMetrics(@Param('id', ParseIntPipe) id: number) {
+    return this.riskPoolService.getMetrics(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Post(':id/manual-rebalance')
+  manualRebalance(@Param('id', ParseIntPipe) id: number, @Body() details: any) {
+    return this.riskPoolService.manualRebalance(id, details);
+  }
+
+  @Get(':id/rebalance-logs')
+  getRebalanceLogs(@Param('id', ParseIntPipe) id: number) {
+    return this.riskPoolService.getRebalanceLogs(id);
+  }
+
+  @Post(':id/auto-rebalance')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  autoRebalance(@Param('id', ParseIntPipe) id: number) {
+    return this.riskPoolService.autoRebalance(id);
+  }
 }

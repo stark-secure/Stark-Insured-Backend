@@ -20,6 +20,15 @@ export class RiskPool {
   @Column({ type: 'float', nullable: true })
   apy?: number;
 
+  @Column({ type: 'int', default: 0 })
+  claimCount: number;
+
+  @Column({ type: 'float', default: 0 })
+  payoutVolume: number;
+
+  @Column({ type: 'simple-json', nullable: true })
+  utilizationHistory?: { timestamp: string; utilization: number }[];
+
   @CreateDateColumn()
   createdAt: Date;
 
