@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ClaimService } from '../claim/claim.service';
+import { ConfigService } from '@nestjs/config';
+import { Configuration, OpenAIApi } from 'openai';
 
 export interface ChatMessage {
   userId: string;
@@ -22,7 +24,10 @@ export class ChatbotService {
     'How do I file a claim?': 'You can file a claim via the Claims section in your dashboard.',
   };
 
-  constructor(private readonly claimService: ClaimService) {}
+  constructor(
+    private readonly claimService: ClaimService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async handleMessage(message: ChatMessage): Promise<ChatResponse> {
     // 1. FAQ match
@@ -58,8 +63,24 @@ export class ChatbotService {
   }
 
   private async fallbackToAI(query: string): Promise<string | null> {
-    // TODO: Integrate with real AI provider
-    return null;
+    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
+    if (!apiKey) return null;
+    const configuration = new Configuration({ apiKey });
+    const openai = new OpenAIApi(configuration);
+    try {
+      const completion = await openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You are a helpful insurance assistant.' },
+          { role: 'user', content: query },
+        ],
+        max_tokens: 256,
+      });
+      return completion.data.choices[0]?.message?.content || null;
+    } catch (error) {
+      this.logger.error('OpenAI error', error);
+      return null;
+    }
   }
 
   private logChat(message: ChatMessage, response: string) {
