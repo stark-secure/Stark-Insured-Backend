@@ -16,6 +16,7 @@ import { LpTokenModule } from './lp-token/lp-token.module';
 import { OracleModule } from './oracle/oracle.module';
 import { KycModule } from './kyc/kyc.module';
 import { FraudDetectionModule } from './fraud-detection/fraud-detection.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { FraudDetectionModule } from './fraud-detection/fraud-detection.module';
     OracleModule,
     KycModule,
     FraudDetectionModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
