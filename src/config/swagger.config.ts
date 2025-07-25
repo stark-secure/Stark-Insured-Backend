@@ -44,6 +44,7 @@ export function setupSwagger(app: INestApplication): void {
     .addTag("risk-pools", "Risk pool management")
     .addTag("governance", "DAO governance and proposal management")
     .addTag("Oracle", "Oracle verification and off-chain data integration")
+    .addTag("lp-token", "LP Token minting, burning, and event endpoints")
     .addServer("http://localhost:3000", "Development server")
     .addServer("https://api-staging.starkinsured.com", "Staging server")
     .build()
