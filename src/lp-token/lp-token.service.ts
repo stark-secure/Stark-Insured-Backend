@@ -5,12 +5,18 @@ import { LPToken } from './lp-token.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MintLpTokenDto } from './dtos/mint-lp-token.dto';
 import { BurnLpTokenDto } from './dtos/burn-lp-token.dto';
+import { LPTokenEvent } from './lp-token-event.entity';
+import { LpTokenEventQueryDto } from './dtos/lp-token-event-query.dto';
+import { PaginatedLpTokenEventResponseDto } from './dtos/paginated-lp-token-event-response.dto';
+import { LpTokenEventResponseDto } from './dtos/lp-token-event-response.dto';
 
 @Injectable()
 export class LpTokenService {
   constructor(
     @InjectRepository(LPToken)
-    private readonly lpTokenRepo: Repository<LPToken>
+    private readonly lpTokenRepo: Repository<LPToken>,
+    @InjectRepository(LPTokenEvent)
+    private readonly lpTokenEventRepo: Repository<LPTokenEvent>,
   ) {}
 
   async mint(userId: string, dto: MintLpTokenDto) {
@@ -21,7 +27,18 @@ export class LpTokenService {
       tokenId: uuidv4(),
     });
 
-    return this.lpTokenRepo.save(token);
+    const savedToken = await this.lpTokenRepo.save(token);
+
+    // Emit mint event
+    const event = this.lpTokenEventRepo.create({
+      userAddress: userId,
+      amount: dto.amount,
+      eventType: 'mint',
+      transactionReference: savedToken.tokenId,
+    });
+    await this.lpTokenEventRepo.save(event);
+
+    return savedToken;
   }
 
   async burn(userId: string, dto: BurnLpTokenDto) {
@@ -34,15 +51,57 @@ export class LpTokenService {
 
     token.amount -= dto.amount;
 
+    let result;
     if (token.amount === 0) {
       await this.lpTokenRepo.remove(token);
-      return { message: 'Token fully burned and removed' };
+      result = { message: 'Token fully burned and removed' };
     } else {
-      return this.lpTokenRepo.save(token);
+      result = await this.lpTokenRepo.save(token);
     }
+
+    // Emit burn event
+    const event = this.lpTokenEventRepo.create({
+      userAddress: userId,
+      amount: dto.amount,
+      eventType: 'burn',
+      transactionReference: dto.tokenId,
+    });
+    await this.lpTokenEventRepo.save(event);
+
+    return result;
   }
 
   async findByUser(userId: string) {
     return this.lpTokenRepo.find({ where: { userId } });
+  }
+
+  async getEvents(query: LpTokenEventQueryDto): Promise<PaginatedLpTokenEventResponseDto> {
+    const { eventType, userAddress, fromDate, toDate, page = 1, limit = 20 } = query;
+    const qb = this.lpTokenEventRepo.createQueryBuilder('event');
+
+    if (eventType) qb.andWhere('event.eventType = :eventType', { eventType });
+    if (userAddress) qb.andWhere('event.userAddress = :userAddress', { userAddress });
+    if (fromDate) qb.andWhere('event.timestamp >= :fromDate', { fromDate });
+    if (toDate) qb.andWhere('event.timestamp <= :toDate', { toDate });
+
+    qb.orderBy('event.timestamp', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data: data.map(e => ({
+        id: e.id,
+        userAddress: e.userAddress,
+        amount: Number(e.amount),
+        eventType: e.eventType,
+        timestamp: e.timestamp,
+        transactionReference: e.transactionReference,
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 }
