@@ -9,6 +9,8 @@ import { LPTokenEvent } from './lp-token-event.entity';
 import { LpTokenEventQueryDto } from './dtos/lp-token-event-query.dto';
 import { PaginatedLpTokenEventResponseDto } from './dtos/paginated-lp-token-event-response.dto';
 import { LpTokenEventResponseDto } from './dtos/lp-token-event-response.dto';
+import { LpBalanceHistoryQueryDto } from './dtos/lp-balance-history-query.dto';
+import { LpBalanceHistoryResponseDto, LpBalanceHistoryPointDto } from './dtos/lp-balance-history-response.dto';
 
 @Injectable()
 export class LpTokenService {
@@ -104,4 +106,109 @@ export class LpTokenService {
       limit,
     };
   }
+
+  async getBalanceHistory(userId: string, query: LpBalanceHistoryQueryDto): Promise<LpBalanceHistoryResponseDto> {
+    const { startDate, endDate, interval } = query;
+
+    const qb = this.lpTokenEventRepo.createQueryBuilder('event')
+      .where('event.userAddress = :userId', { userId })
+      .orderBy('event.timestamp', 'ASC');
+
+    if (startDate) {
+      qb.andWhere('event.timestamp >= :startDate', { startDate });
+    }
+    if (endDate) {
+      qb.andWhere('event.timestamp <= :endDate', { endDate });
+    }
+
+    const events = await qb.getMany();
+
+    if (events.length === 0) {
+      const currentBalance = await this.getCurrentBalance(userId);
+      return {
+        userId,
+        startDate: startDate || 'N/A',
+        endDate: endDate || new Date().toISOString(),
+        interval,
+        history: [],
+        totalPoints: 0,
+        currentBalance: currentBalance.toFixed(8),
+      };
+    }
+
+    const history = this.calculateBalanceHistory(events, interval, startDate, endDate);
+    const currentBalance = await this.getCurrentBalance(userId);
+
+    return {
+      userId,
+      startDate: startDate || events[0].timestamp.toISOString(),
+      endDate: endDate || new Date().toISOString(),
+      interval,
+      history,
+      totalPoints: history.length,
+      currentBalance: currentBalance.toFixed(8),
+    };
+  }
+
+  private calculateBalanceHistory(
+    events: LPTokenEvent[],
+    interval: 'daily' | 'weekly' | 'monthly',
+    startDate?: string,
+    endDate?: string,
+  ): LpBalanceHistoryPointDto[] {
+    const history: LpBalanceHistoryPointDto[] = [];
+    let currentBalance = 0;
+    if (events.length === 0) return history;
+
+    const from = startDate ? new Date(startDate) : events[0].timestamp;
+    const to = endDate ? new Date(endDate) : new Date();
+    let currentPoint = this.getStartOfInterval(from, interval);
+
+    let eventIndex = 0;
+    while (currentPoint <= to) {
+      while (eventIndex < events.length && events[eventIndex].timestamp <= currentPoint) {
+        const event = events[eventIndex];
+        if (event.eventType === 'mint') {
+          currentBalance += Number(event.amount);
+        } else {
+          currentBalance -= Number(event.amount);
+        }
+        eventIndex++;
+      }
+
+      history.push({ timestamp: currentPoint.toISOString(), balance: currentBalance.toFixed(8) });
+
+      if (interval === 'daily') {
+        currentPoint.setDate(currentPoint.getDate() + 1);
+      } else if (interval === 'weekly') {
+        currentPoint.setDate(currentPoint.getDate() + 7);
+      } else if (interval === 'monthly') {
+        currentPoint.setMonth(currentPoint.getMonth() + 1);
+      }
+    }
+
+    return history;
+  }
+
+  private getStartOfInterval(date: Date, interval: 'daily' | 'weekly' | 'monthly'): Date {
+    const start = new Date(date);
+    if (interval === 'daily') {
+      start.setUTCHours(0, 0, 0, 0);
+    } else if (interval === 'weekly') {
+      const day = start.getUTCDay();
+      const diff = start.getUTCDate() - day + (day === 0 ? -6 : 1); 
+      start.setUTCDate(diff);
+      start.setUTCHours(0, 0, 0, 0);
+    } else if (interval === 'monthly') {
+      start.setUTCDate(1);
+      start.setUTCHours(0, 0, 0, 0);
+    }
+    return start;
+  }
+
+  private async getCurrentBalance(userId: string): Promise<number> {
+    const tokens = await this.lpTokenRepo.find({ where: { userId } });
+    return tokens.reduce((acc, token) => acc + Number(token.amount), 0);
+  }
+}
 }

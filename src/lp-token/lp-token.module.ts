@@ -1,3 +1,6 @@
+import { LpBalanceHistoryQueryDto } from './dtos/lp-balance-history-query.dto';
+import { LpBalanceHistoryResponseDto } from './dtos/lp-balance-history-response.dto';
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LPToken } from './lp-token.entity';
