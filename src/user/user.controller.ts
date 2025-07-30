@@ -58,6 +58,22 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
+  @Patch(':id/role')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Assign role to user (Admin only)' })
+  @ApiResponse({ status: 200, description: 'User role updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  assignRole(
+    @Param('id') id: string,
+    @Body('role') role: UserRole
+  ) {
+    return this.userService.assignRole(id, role);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete user (Admin only)' })

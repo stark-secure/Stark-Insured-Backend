@@ -14,6 +14,8 @@ import { KycVerification } from '../../kyc/entities/kyc-verification.entity';
 export enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
+  AGENT = 'agent',
+  CUSTOMER = 'customer',
 }
 
 @Entity()

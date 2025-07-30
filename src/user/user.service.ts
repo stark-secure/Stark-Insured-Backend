@@ -85,4 +85,10 @@ export class UserService {
     const user = await this.findOne(id)
     return this.userRepository.remove(user)
   }
+
+  async assignRole(id: string, role: UserRole) {
+    const user = await this.findOne(id);
+    user.role = role;
+    return this.userRepository.save(user);
+  }
 }
