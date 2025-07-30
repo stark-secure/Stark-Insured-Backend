@@ -6,6 +6,7 @@ import { UpdateUserDto } from "./dto/update-user.dto"
 import { User, UserRole } from "./entities/user.entity"
 import { HashingService } from "../auth/hashing.service"
 import { MailService } from "../mail/mail.service"
+import { MfaMethod } from "./entities/user.entity"
 
 @Injectable()
 export class UserService {
@@ -89,6 +90,39 @@ export class UserService {
   async assignRole(id: string, role: UserRole) {
     const user = await this.findOne(id);
     user.role = role;
+    return this.userRepository.save(user);
+  }
+
+  async setMfaSecret(id: string, secret: string) {
+    const user = await this.findOne(id);
+    user.mfaSecret = secret;
+    return this.userRepository.save(user);
+  }
+
+  async setMfaEnabled(id: string, enabled: boolean) {
+    const user = await this.findOne(id);
+    user.mfaEnabled = enabled;
+    return this.userRepository.save(user);
+  }
+
+  async setMfaMethod(id: string, method: MfaMethod) {
+    const user = await this.findOne(id);
+    user.mfaMethod = method;
+    return this.userRepository.save(user);
+  }
+
+  async setMfaBackupCodes(id: string, codes: string) {
+    const user = await this.findOne(id);
+    user.mfaBackupCodes = codes;
+    return this.userRepository.save(user);
+  }
+
+  async clearMfa(id: string) {
+    const user = await this.findOne(id);
+    user.mfaEnabled = false;
+    user.mfaSecret = null;
+    user.mfaBackupCodes = null;
+    user.mfaMethod = null;
     return this.userRepository.save(user);
   }
 }
