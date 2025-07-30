@@ -6,6 +6,7 @@ import {
   Get,
   Request,
   Query,
+  Param,
 } from '@nestjs/common';
 import { LpTokenService } from './lp-token.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -13,7 +14,9 @@ import { MintLpTokenDto } from './dtos/mint-lp-token.dto';
 import { BurnLpTokenDto } from './dtos/burn-lp-token.dto';
 import { LpTokenEventQueryDto } from './dtos/lp-token-event-query.dto';
 import { PaginatedLpTokenEventResponseDto } from './dtos/paginated-lp-token-event-response.dto';
-import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { LpBalanceHistoryQueryDto } from './dtos/lp-balance-history-query.dto';
+import { LpBalanceHistoryResponseDto } from './dtos/lp-balance-history-response.dto';
+import { ApiQuery, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 
 @ApiTags('lp-token')
 @Controller('lp-token')
@@ -46,5 +49,18 @@ export class LpTokenController {
   @ApiResponse({ status: 200, type: PaginatedLpTokenEventResponseDto })
   async getEvents(@Query() query: LpTokenEventQueryDto): Promise<PaginatedLpTokenEventResponseDto> {
     return this.lpTokenService.getEvents(query);
+  }
+
+  @Get('history/:userId')
+  @ApiParam({ name: 'userId', type: String, description: 'User ID to get balance history for' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO string)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO string)' })
+  @ApiQuery({ name: 'interval', required: false, enum: ['daily', 'weekly', 'monthly'], description: 'Aggregation interval' })
+  @ApiResponse({ status: 200, type: LpBalanceHistoryResponseDto })
+  async getBalanceHistory(
+    @Param('userId') userId: string,
+    @Query() query: LpBalanceHistoryQueryDto,
+  ): Promise<LpBalanceHistoryResponseDto> {
+    return this.lpTokenService.getBalanceHistory(userId, query);
   }
 }

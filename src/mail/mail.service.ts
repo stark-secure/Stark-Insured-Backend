@@ -107,6 +107,20 @@ export class MailService {
     }
   }
 
+  async sendOtpEmail(to: string, otp: string): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to,
+        subject: 'Your MFA OTP Code',
+        text: `Your OTP code is: ${otp}`,
+      });
+      this.logger.log(`OTP email sent successfully to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send OTP email to ${to}:`, error);
+      throw error;
+    }
+  }
+
   async sendTestEmail(to: string): Promise<void> {
     try {
       await this.mailerService.sendMail({

@@ -14,6 +14,13 @@ import { KycVerification } from '../../kyc/entities/kyc-verification.entity';
 export enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
+  AGENT = 'agent',
+  CUSTOMER = 'customer',
+}
+
+export enum MfaMethod {
+  EMAIL = 'email',
+  AUTHENTICATOR = 'authenticator',
 }
 
 @Entity()
@@ -43,6 +50,18 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ default: false })
+  mfaEnabled: boolean;
+
+  @Column({ nullable: true })
+  mfaSecret?: string;
+
+  @Column({ nullable: true, type: 'text' })
+  mfaBackupCodes?: string;
+
+  @Column({ type: 'enum', enum: MfaMethod, nullable: true })
+  mfaMethod?: MfaMethod;
 
   @Column({ nullable: true })
   starknetAddress?: string;

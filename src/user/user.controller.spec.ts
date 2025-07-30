@@ -14,6 +14,7 @@ describe('UserController', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    assignRole: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -85,6 +86,18 @@ describe('UserController', () => {
       const result = await controller.findOne('1');
       expect(result).toEqual(user);
       expect(mockUserService.findOne).toHaveBeenCalledWith('1');
+    });
+  });
+
+  describe('assignRole', () => {
+    it('should assign a role to a user', async () => {
+      const userId = '1';
+      const role = 'admin';
+      const updatedUser = { id: userId, role };
+      mockUserService.assignRole = jest.fn().mockResolvedValue(updatedUser);
+      const result = await controller.assignRole(userId, role);
+      expect(result).toEqual(updatedUser);
+      expect(mockUserService.assignRole).toHaveBeenCalledWith(userId, role);
     });
   });
 });
