@@ -7,6 +7,7 @@ import * as speakeasy from 'speakeasy';
 import * as crypto from 'crypto';
 import { MfaMethod } from '../user/entities/user.entity';
 import { MailService } from '../mail/mail.service';
+import * as qrcode from 'qrcode';
 
 @Injectable()
 export class AuthService {
@@ -68,7 +69,9 @@ export class AuthService {
       const secret = speakeasy.generateSecret({ length: 20 });
       await this.userService.setMfaSecret(userId, secret.base32);
       await this.userService.setMfaMethod(userId, MfaMethod.AUTHENTICATOR);
-      return { otpauth_url: secret.otpauth_url, secret: secret.base32 };
+      // Generate QR code as data URL
+      const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url);
+      return { otpauth_url: secret.otpauth_url, secret: secret.base32, qr: qrCodeDataUrl };
     } else if (method === 'email') {
       // Generate OTP
       const otp = crypto.randomInt(100000, 999999).toString();
@@ -77,7 +80,7 @@ export class AuthService {
       await this.userService.setMfaMethod(userId, MfaMethod.EMAIL);
       // Send OTP via email
       const user = await this.userService.findOne(userId);
-      await this.mailService.sendTestEmail(user.email); // Replace with sendOtpEmail
+      await this.mailService.sendOtpEmail(user.email, otp);
       return { message: 'OTP sent to your email' };
     }
     throw new Error('Invalid MFA method');
