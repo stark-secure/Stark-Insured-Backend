@@ -8,6 +8,7 @@ import { AuthModule } from "./auth/auth.module"
 import { UserModule } from "./user/user.module"
 import { RiskPoolModule } from "./risk-pool/risk-pool.module"
 import { PaymentModule } from "./payment/payment.module"
+import { MultiPaymentsModule } from "./multi-payments/multi-payments.module"
 import { PolicysModule } from "./policys/policys.module"
 import { ClaimModule } from "./claim/claim.module"
 import { GovernanceModule } from "./governance/governance.module"
@@ -43,6 +44,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     UserModule,
     RiskPoolModule,
     PaymentModule,
+    MultiPaymentsModule,
     PolicysModule,
     ClaimModule,
     GovernanceModule,
