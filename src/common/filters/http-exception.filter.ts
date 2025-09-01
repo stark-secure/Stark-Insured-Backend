@@ -27,31 +27,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const response = ctx.getResponse<Response>();
         const request = ctx.getRequest<Request>();
 
-        // Determine the HTTP status code from the exception, or default to internal server error
+      
         const status =
         exception instanceof HttpException
             ? exception.getStatus()
             : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        // Get the error response from the exception. It can be a string or an object.
-        const errorResponse = exception.getResponse();
+       
 
-        // Determine the message for the error response.
-        // If errorResponse is an object and has a 'message' property, use that.
-        // Otherwise, use the exception's message or a default message.
-        const message =
+      
         typeof errorResponse === 'object' && 'message' in errorResponse
             ? (errorResponse as any).message
             : exception.message || 'Internal Server Error';
 
-        // Log error for debugging purposes
-        // this.logger.error(
-        //     `HTTP ${status} Error: ${message}`,
-        //     exception.stack,
-        //     `${request.method} ${request.url}`,
-        // );
-        
-        // Send the structured error response
+    
         response.status(status).json({
             statusCode: status,
             message: message,

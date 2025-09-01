@@ -37,84 +37,104 @@ export class KycService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<KycVerificationResponseDto> {
-    // Check if user exists
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    try {
+      // Check if user exists
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        this.logger.error(`User not found: ${userId}`);
+        throw new NotFoundException('User not found');
+      }
 
-    // Prevent duplicate pending or approved KYC
-    const existingKyc = await this.kycRepository.findOne({
-      where: [
-        { userId, status: KycStatus.APPROVED },
-        { userId, status: KycStatus.PENDING },
-      ],
-    });
-    if (existingKyc) {
-      throw new BadRequestException(
-        'User already has a pending or approved KYC verification',
+      // Prevent duplicate pending or approved KYC
+      const existingKyc = await this.kycRepository.findOne({
+        where: [
+          { userId, status: KycStatus.APPROVED },
+          { userId, status: KycStatus.PENDING },
+        ],
+      });
+      if (existingKyc) {
+        this.logger.warn(`Duplicate KYC attempt for user ${userId}`);
+        throw new BadRequestException(
+          'User already has a pending or approved KYC verification',
+        );
+      }
+
+      // Validate document image (base64 and type)
+      if (!this.isValidBase64Image(kycData.documentImage)) {
+        this.logger.warn(`Invalid document image for user ${userId}`);
+        throw new BadRequestException('Invalid document image format');
+      }
+
+      // Validate required fields
+      if (!kycData.fullName || !kycData.dob || !kycData.nationalId || !kycData.documentType) {
+        this.logger.warn(`Missing required KYC fields for user ${userId}`);
+        throw new BadRequestException('Missing required KYC fields');
+      }
+
+      // Generate unique verification ID
+      const verificationId = this.generateVerificationId();
+
+      // Hash the document image for storage (security best practice)
+      const documentImageHash = this.hashDocumentImage(kycData.documentImage);
+
+      // Create KYC verification record
+      const kycVerification = this.kycRepository.create({
+        verificationId,
+        userId,
+        fullName: kycData.fullName,
+        dob: kycData.dob,
+        nationalId: kycData.nationalId,
+        documentType: kycData.documentType,
+        documentImageHash,
+        status: KycStatus.PENDING,
+        estimatedProcessingTime: this.calculateProcessingTime(
+          kycData.documentType,
+        ),
+        metadata: {
+          provider: 'mock-kyc-provider',
+          version: '1.0.0',
+          submissionMethod: 'api',
+          ipAddress: ipAddress || 'masked',
+          userAgent: userAgent || 'masked',
+        },
+      });
+
+      await this.kycRepository.save(kycVerification);
+
+      // Simulate external KYC provider processing
+      let mockResult;
+      try {
+        mockResult = await this.simulateKycVerification(kycData);
+      } catch (err) {
+        this.logger.error(`KYC simulation failed for user ${userId}: ${err.message}`, err.stack);
+        throw new BadRequestException('KYC simulation failed');
+      }
+
+      // Artificial delay for pending/manual review simulation
+      if (mockResult.status === KycStatus.PENDING) {
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
+      }
+
+      // Update verification with mock result
+      kycVerification.status = mockResult.status;
+      kycVerification.rejectionReason = mockResult.rejectionReason;
+      kycVerification.providerResponse = mockResult.providerResponse;
+
+      if (mockResult.status !== KycStatus.PENDING) {
+        kycVerification.completedAt = new Date();
+      }
+
+      await this.kycRepository.save(kycVerification);
+
+      this.logger.log(
+        `KYC verification initiated for user ${userId} with ID ${verificationId}`,
       );
+
+      return this.mapToResponseDto(kycVerification);
+    } catch (err) {
+      this.logger.error(`KYC verification failed for user ${userId}: ${err.message}`, err.stack);
+      throw err;
     }
-
-    // Validate document image (base64 and type)
-    if (!this.isValidBase64Image(kycData.documentImage)) {
-      throw new BadRequestException('Invalid document image format');
-    }
-
-    // Generate unique verification ID
-    const verificationId = this.generateVerificationId();
-
-    // Hash the document image for storage (security best practice)
-    const documentImageHash = this.hashDocumentImage(kycData.documentImage);
-
-    // Create KYC verification record
-    const kycVerification = this.kycRepository.create({
-      verificationId,
-      userId,
-      fullName: kycData.fullName,
-      dob: kycData.dob,
-      nationalId: kycData.nationalId,
-      documentType: kycData.documentType,
-      documentImageHash,
-      status: KycStatus.PENDING,
-      estimatedProcessingTime: this.calculateProcessingTime(
-        kycData.documentType,
-      ),
-      metadata: {
-        provider: 'mock-kyc-provider',
-        version: '1.0.0',
-        submissionMethod: 'api',
-        ipAddress: ipAddress || 'masked',
-        userAgent: userAgent || 'masked',
-      },
-    });
-
-    await this.kycRepository.save(kycVerification);
-
-    // Simulate external KYC provider processing
-    const mockResult = await this.simulateKycVerification(kycData);
-
-    // Artificial delay for pending/manual review simulation
-    if (mockResult.status === KycStatus.PENDING) {
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
-    }
-
-    // Update verification with mock result
-    kycVerification.status = mockResult.status;
-    kycVerification.rejectionReason = mockResult.rejectionReason;
-    kycVerification.providerResponse = mockResult.providerResponse;
-
-    if (mockResult.status !== KycStatus.PENDING) {
-      kycVerification.completedAt = new Date();
-    }
-
-    await this.kycRepository.save(kycVerification);
-
-    this.logger.log(
-      `KYC verification initiated for user ${userId} with ID ${verificationId}`,
-    );
-
-    return this.mapToResponseDto(kycVerification);
   }
 
   // Admin: manually approve/reject pending KYC

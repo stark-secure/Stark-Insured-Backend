@@ -1,6 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Module } from "@nestjs/common"
+import { Module, MiddlewareConsumer, NestModule } from "@nestjs/common"
 import { ConfigModule, ConfigService } from "@nestjs/config"
+import configuration from './config/configuration';
+import configSchema from './config/schema';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
@@ -25,6 +28,8 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [".env.development", ".env"],
+      load: [configuration],
+      validationSchema: configSchema,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -60,4 +65,8 @@ import { ChatbotModule } from './chatbot/chatbot.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggingMiddleware).forRoutes('*');
+  }
+}
