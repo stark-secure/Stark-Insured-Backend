@@ -27,14 +27,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const response = ctx.getResponse<Response>();
         const request = ctx.getRequest<Request>();
 
-        // Determine the HTTP status code from the exception, or default to internal server error
+      
         const status =
         exception instanceof HttpException
             ? exception.getStatus()
             : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        // Get the error response from the exception. It can be a string or an object.
-        const errorResponse = exception.getResponse();
+       
 
         // Determine the message for the error response.
         // If errorResponse is an object and has a 'message' property, use that.
