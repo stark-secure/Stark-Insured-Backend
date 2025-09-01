@@ -35,22 +35,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
        
 
-        // Determine the message for the error response.
-        // If errorResponse is an object and has a 'message' property, use that.
-        // Otherwise, use the exception's message or a default message.
-        const message =
+      
         typeof errorResponse === 'object' && 'message' in errorResponse
             ? (errorResponse as any).message
             : exception.message || 'Internal Server Error';
 
-        // Log error for debugging purposes
-        // this.logger.error(
-        //     `HTTP ${status} Error: ${message}`,
-        //     exception.stack,
-        //     `${request.method} ${request.url}`,
-        // );
-        
-        // Send the structured error response
+    
         response.status(status).json({
             statusCode: status,
             message: message,
