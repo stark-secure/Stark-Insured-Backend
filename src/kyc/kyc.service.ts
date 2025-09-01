@@ -30,9 +30,12 @@ export class KycService {
     private configService: ConfigService,
   ) {}
 
+
   async verifyKyc(
     userId: string,
     kycData: KycVerificationRequestDto,
+    ipAddress?: string,
+    userAgent?: string,
   ): Promise<KycVerificationResponseDto> {
     // Check if user exists
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -40,18 +43,22 @@ export class KycService {
       throw new NotFoundException('User not found');
     }
 
-    // Check if user already has a pending or approved KYC
+    // Prevent duplicate pending or approved KYC
     const existingKyc = await this.kycRepository.findOne({
-      where: {
-        userId,
-        status: KycStatus.APPROVED,
-      },
+      where: [
+        { userId, status: KycStatus.APPROVED },
+        { userId, status: KycStatus.PENDING },
+      ],
     });
-
     if (existingKyc) {
       throw new BadRequestException(
-        'User already has an approved KYC verification',
+        'User already has a pending or approved KYC verification',
       );
+    }
+
+    // Validate document image (base64 and type)
+    if (!this.isValidBase64Image(kycData.documentImage)) {
+      throw new BadRequestException('Invalid document image format');
     }
 
     // Generate unique verification ID
@@ -77,7 +84,8 @@ export class KycService {
         provider: 'mock-kyc-provider',
         version: '1.0.0',
         submissionMethod: 'api',
-        ipAddress: 'masked', // In real implementation, you'd get this from request
+        ipAddress: ipAddress || 'masked',
+        userAgent: userAgent || 'masked',
       },
     });
 
@@ -85,6 +93,11 @@ export class KycService {
 
     // Simulate external KYC provider processing
     const mockResult = await this.simulateKycVerification(kycData);
+
+    // Artificial delay for pending/manual review simulation
+    if (mockResult.status === KycStatus.PENDING) {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1s delay
+    }
 
     // Update verification with mock result
     kycVerification.status = mockResult.status;
@@ -102,6 +115,32 @@ export class KycService {
     );
 
     return this.mapToResponseDto(kycVerification);
+  }
+
+  // Admin: manually approve/reject pending KYC
+  async adminUpdateKycStatus(
+    verificationId: string,
+    status: KycStatus,
+    rejectionReason?: string,
+  ): Promise<boolean> {
+    const kyc = await this.kycRepository.findOne({ where: { verificationId } });
+    if (!kyc || kyc.status !== KycStatus.PENDING) return false;
+    kyc.status = status;
+    if (status === KycStatus.REJECTED) {
+      kyc.rejectionReason = rejectionReason || 'Rejected by admin';
+    } else {
+      kyc.rejectionReason = undefined;
+    }
+    kyc.completedAt = new Date();
+    await this.kycRepository.save(kyc);
+    return true;
+  }
+
+  // Validate base64 image and type
+  private isValidBase64Image(data: string): boolean {
+    if (!data) return false;
+    const matches = data.match(/^data:image\/(jpeg|png|jpg);base64,[A-Za-z0-9+/=]+$/);
+    return !!matches;
   }
 
   async getKycStatus(

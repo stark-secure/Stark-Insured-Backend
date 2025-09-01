@@ -113,7 +113,10 @@ export class KycController {
     @Body() kycData: KycVerificationRequestDto,
   ): Promise<KycVerificationResponseDto> {
     const userId = req.user.id;
-    return this.kycService.verifyKyc(userId, kycData);
+    // Extract IP and user-agent for audit
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    return this.kycService.verifyKyc(userId, kycData, ip, userAgent);
   }
 
   @Get('status/:verificationId')
