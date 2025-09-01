@@ -14,7 +14,7 @@ describe('LoggingMiddleware', () => {
 
   beforeEach(() => {
     middleware = new LoggingMiddleware();
-    req = { method: 'GET', originalUrl: '/test' };
+    req = { method: 'GET', originalUrl: '/test', headers: {} };
     res = {
       on: jest.fn((event, cb) => {
         if (event === 'finish') {
@@ -32,21 +32,34 @@ describe('LoggingMiddleware', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('should log method, url, status, and duration on finish', () => {
+  it('should log structured JSON with method, url, status, duration, and timestamp', () => {
     middleware.use(req, res, next);
-    // Simulate response finish
     res._finish();
-    expect(mockLogger.log).toHaveBeenCalledWith(
-      expect.stringMatching(/GET \/test 200 \+\d+ms/)
-    );
+    const logArg = mockLogger.log.mock.calls[0][0];
+    const parsed = JSON.parse(logArg);
+    expect(parsed.method).toBe('GET');
+    expect(parsed.url).toBe('/test');
+    expect(parsed.status).toBe(200);
+    expect(typeof parsed.durationMs).toBe('number');
+    expect(typeof parsed.timestamp).toBe('string');
+    expect(parsed.correlationId).toBeUndefined();
   });
 
   it('should handle different status codes', () => {
     res.statusCode = 404;
     middleware.use(req, res, next);
     res._finish();
-    expect(mockLogger.log).toHaveBeenCalledWith(
-      expect.stringMatching(/GET \/test 404 \+\d+ms/)
-    );
+    const logArg = mockLogger.log.mock.calls[0][0];
+    const parsed = JSON.parse(logArg);
+    expect(parsed.status).toBe(404);
+  });
+
+  it('should include correlationId if present in headers', () => {
+    req.headers['x-correlation-id'] = 'abc-123';
+    middleware.use(req, res, next);
+    res._finish();
+    const logArg = mockLogger.log.mock.calls[0][0];
+    const parsed = JSON.parse(logArg);
+    expect(parsed.correlationId).toBe('abc-123');
   });
 });
