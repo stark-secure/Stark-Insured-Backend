@@ -1,30 +1,37 @@
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min, MaxLength, Matches } from "class-validator"
 import { PaymentType, PaymentStatus } from "../entities/payment.entity"
 import { SupportedChain } from "../interfaces/payment-processor.interface"
+import { ApiProperty } from '@nestjs/swagger'
 
 export class CreatePaymentDto {
+  @ApiProperty({ enum: PaymentType, description: 'Type of payment' })
   @IsEnum(PaymentType)
   @IsNotEmpty()
   type: PaymentType
 
+  @ApiProperty({ description: 'Amount in smallest unit', example: 100 })
   @IsNumber()
   @Min(0)
   @IsNotEmpty()
   amount: number
 
+  @ApiProperty({ description: 'Currency or token symbol', example: 'ETH' })
   @IsString()
   @IsNotEmpty()
   currency: string
 
+  @ApiProperty({ enum: SupportedChain, description: 'Blockchain chain name' })
   @IsEnum(SupportedChain)
   @IsNotEmpty()
   chainName: SupportedChain
 
+  @ApiProperty({ description: 'Optional recipient address', example: '0xabc...' , required: false})
   @IsString()
   @IsOptional()
   @MaxLength(100)
   toAddress?: string
 
+  @ApiProperty({ description: 'Optional metadata', required: false })
   @IsOptional()
   metadata?: Record<string, any>
 }
