@@ -22,7 +22,7 @@ export function setupSwagger(app: INestApplication): void {
     .setContact(
       "Stark Insured Team",
       "https://github.com/Stark-Insured/Stark-Insured-Backend",
-      "support@stmportant for matching up with @ApiBearerAuth() in your controller!arkinsured.com",
+      "support@starkinsured.com",
     )
     .setLicense("MIT", "https://opensource.org/licenses/MIT")
     .addBearerAuth(

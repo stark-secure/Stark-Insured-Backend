@@ -4,6 +4,8 @@ import { ConfigModule, ConfigService } from "@nestjs/config"
 import configuration from './config/configuration';
 import configSchema from './config/schema';
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
+import { WinstonModule } from 'nest-winston';
+import { winstonLoggerOptions } from './common/logger/winston.logger';
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
@@ -25,6 +27,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
+  WinstonModule.forRoot(winstonLoggerOptions),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [".env.development", ".env"],

@@ -3,13 +3,14 @@ import { ValidationPipe } from "@nestjs/common"
 import { AppModule } from "./app.module"
 import { setupSwagger } from "./config/swagger.config"
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
-
-  // Apply the global exception filter
-  // This ensures all unhandled exceptions are caught and formatted consistently.
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // Attach the global exception filter with the winston logger injected
+  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  app.useGlobalFilters(new HttpExceptionFilter(logger));
 
   // Global validation pipe
   app.useGlobalPipes(

@@ -1,15 +1,19 @@
 import { Controller, Post, UseGuards, Request, Get, Body } from "@nestjs/common"
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from "@nestjs/swagger"
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from "@nestjs/swagger"
 import type { AuthService } from "./auth.service"
 import { LocalAuthGuard } from "./guards/local-auth.guard"
 import { JwtAuthGuard } from "./guards/jwt-auth.guard"
 
 class LoginDto {
+  @ApiProperty({ example: 'user@example.com', description: 'User login email' })
   email: string
+
+  @ApiProperty({ example: 'P@ssw0rd!', description: 'User password' })
   password: string
 }
 
 class RefreshTokenDto {
+  @ApiProperty({ description: 'Refresh token provided after login', example: 'f1e2d3c4...' })
   refresh_token: string
 }
 
